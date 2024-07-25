@@ -1,0 +1,13 @@
+/* En ProductList.css */
+.product-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .product-item {
+    /* Estilos para cada producto individual */
+    text-align: center;
+    width: 250px; /* O el ancho que prefieras */
+  }
