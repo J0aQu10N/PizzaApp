@@ -1,4 +1,3 @@
-// routes/auth.js
 const express = require('express');
 const router = express.Router();
 const admin = require('firebase-admin');
@@ -10,13 +9,11 @@ router.post('/register', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Crear usuario en Firebase Authentication
     const userRecord = await auth.createUser({
       email: email,
       password: password
     });
 
-    // Guardar información adicional en Firestore
     await db.collection('config').doc(userRecord.uid).set({
       email: email
     });

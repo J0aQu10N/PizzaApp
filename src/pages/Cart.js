@@ -1,5 +1,5 @@
 import React from 'react';
-import Cart from '../components/Cart'; // Importamos el componente Cart desde el directorio components
+import Cart from '../components/Cart';
 
 function CarritoPage() {
   return (

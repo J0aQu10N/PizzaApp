@@ -1,18 +1,3 @@
- /*// src/pages/DashboardProducts.js
-import React from 'react';
-
-function DashboardProducts() {
-  // Aquí iría la lógica para obtener y mostrar productos
-  return (
-    <div>
-      <h2>Gestión de Productos</h2>
-      {// Lista de productos }
-    </div>
-  );
-}
-
-export default DashboardProducts; */
-
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase/config';
 import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -33,13 +18,11 @@ function DashboardProducts() {
   const handleEdit = async (id, newData) => {
     const productRef = doc(db, 'products', id);
     await updateDoc(productRef, newData);
-    // Actualiza el estado local
     setProducts(products.map(product => product.id === id ? { ...product, ...newData } : product));
   };
 
   const handleDelete = async (id) => {
     await deleteDoc(doc(db, 'products', id));
-    // Elimina el producto del estado local
     setProducts(products.filter(product => product.id !== id));
   };
 

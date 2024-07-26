@@ -1,17 +1,3 @@
-/*// src/pages/DashboardUsers.js
-import React from 'react';
-
-function DashboardUsers() {
-  return (
-    <div>
-      <h2>Gestión de Usuarios</h2>
-      {}
-    </div>
-  );
-}
-
-export default DashboardUsers; */
-
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase/config';
 import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -33,13 +19,11 @@ function DashboardUsers() {
   const handleToggleAdmin = async (id, currentAdminStatus) => {
     const userRef = doc(db, 'users', id);
     await updateDoc(userRef, { isAdmin: !currentAdminStatus });
-    // Actualiza el estado local
     setUsers(users.map(user => user.id === id ? { ...user, isAdmin: !currentAdminStatus } : user));
   };
 
   const handleDelete = async (id) => {
     await deleteDoc(doc(db, 'users', id));
-    // Elimina el usuario del estado local
     setUsers(users.filter(user => user.id !== id));
   };
 

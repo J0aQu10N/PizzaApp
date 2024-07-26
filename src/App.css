@@ -34,7 +34,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente para mejorar la legibilidad */
+    background-color: rgba(0, 0, 0, 0.5);
   }
   
   .titulo-principal {
@@ -234,10 +234,10 @@ footer {
         display: block;
       }
       .titulo-principal {
-        font-size: 2.5rem;  /* Tamaño de fuente más grande */
-        font-weight: bold;  /* Texto en negrita */
-        text-align: center; /* Centrar el texto */
-        line-height: 1.2;   /* Espaciado entre líneas */
-        margin-bottom: 20px; /* Espacio debajo del título */
+        font-size: 2.5rem;  
+        font-weight: bold;  
+        text-align: center; 
+        line-height: 1.2;   
+        margin-bottom: 20px; 
       }
 }
