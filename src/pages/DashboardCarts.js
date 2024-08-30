@@ -1,62 +1,74 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase/config';
-import { collection, getDocs, doc, deleteDoc, getDoc } from 'firebase/firestore';
+import axios from 'axios';
+import { API_URL } from '../config';
 import '../DashboardCart.css';
 
 function DashboardCarts() {
-  const [orders, setOrders] = useState([]);
+  const [carts, setCarts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const ordersCollection = collection(db, 'orders');
-        const ordersSnapshot = await getDocs(ordersCollection);
-        const ordersList = await Promise.all(ordersSnapshot.docs.map(async (orderDoc) => {
-          const orderData = orderDoc.data();
-          const userDocRef = doc(db, 'users', orderData.userId);
-          const userDocSnap = await getDoc(userDocRef);
-          const userData = userDocSnap.data() || {};
-          return { 
-            id: orderDoc.id, 
-            ...orderData,
-            userEmail: userData.email || 'Email no disponible'
-          };
-        }));
-        setOrders(ordersList);
-      } catch (error) {
-        console.error("Error al obtener los pedidos:", error);
-      }
-    };
-    fetchOrders();
+    fetchCarts();
   }, []);
 
-  const handleDelete = async (id) => {
+  const fetchCarts = async () => {
     try {
-      await deleteDoc(doc(db, 'orders', id));
-      setOrders(orders.filter(order => order.id !== id));
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/carts`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      console.log("Carritos obtenidos:", response.data);
+      setCarts(response.data);
+      setError(null);
     } catch (error) {
-      console.error("Error al eliminar el pedido:", error);
+      console.error("Error al obtener los carritos:", error);
+      setError("No se pudieron cargar los carritos. Por favor, intente de nuevo más tarde.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleDeleteCart = async (userId) => {
+    if (!window.confirm("¿Está seguro de que desea eliminar este carrito?")) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/cart/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCarts(carts.filter(cart => cart.userId !== userId));
+    } catch (error) {
+      console.error("Error al eliminar el carrito:", error);
+      alert("No se pudo eliminar el carrito. Por favor, intente de nuevo.");
+    }
+  };
+
+  if (loading) return <div>Cargando carritos...</div>;
+  if (error) return <div>{error}</div>;
+
   return (
     <div className="Cart-dash">
-      <h2>Gestión de Pedidos</h2>
-      {orders.map(order => (
-        <div key={order.id}>
-          <h3>Pedido de {order.userEmail}</h3>
-          <p>Dirección de envío: {order.address || 'No especificada'}</p>
-          <p>Total: ${order.total ? order.total.toFixed(2) : '0.00'}</p>
-          <ul>
-            {order.items && order.items.map(item => (
-              <li key={item.id || item.productId}>
-                {item.name || item.productName} - Cantidad: {item.quantity} - Precio: ${item.price ? item.price.toFixed(2) : '0.00'}
-              </li>
-            ))}
-          </ul>
-          <button onClick={() => handleDelete(order.id)}>Eliminar Pedido</button>
-        </div>
-      ))}
+      <h2>Gestión de Carritos</h2>
+      {carts.length === 0 ? (
+        <p>No hay carritos activos.</p>
+      ) : (
+        carts.map(cart => (
+          <div key={cart.userId} className="cart-item">
+            <h3>Carrito de {cart.userEmail}</h3>
+            <ul>
+              {cart.items.map(item => (
+                <li key={item.id}>
+                  {item.name} - Cantidad: {item.quantity} - Precio: ${item.price.toFixed(2)}
+                </li>
+              ))}
+            </ul>
+            <p>Total: ${cart.total.toFixed(2)}</p>
+            <button onClick={() => handleDeleteCart(cart.userId)}>Eliminar Carrito</button>
+          </div>
+        ))
+      )}
     </div>
   );
 }

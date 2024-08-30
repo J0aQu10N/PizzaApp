@@ -1,8 +1,8 @@
 import React, { useContext, useState } from 'react';
+import axios from 'axios';
 import { CartContext } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { db } from '../firebase/config';
-import { collection, addDoc } from 'firebase/firestore';
+import { API_URL } from '../config';
 
 const Checkout = () => {
   const { cart, clearCart } = useContext(CartContext);
@@ -16,14 +16,23 @@ const Checkout = () => {
       return;
     }
     try {
-      await addDoc(collection(db, 'orders'), {
-        userId: user.uid,
+      const response = await axios.post(`${API_URL}/orders`, {
+        userId: user.id,
         items: cart,
         address,
         createdAt: new Date()
+      }, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
-      clearCart();
-      alert('¡Pedido realizado con éxito!');
+      
+      if (response.status === 201) {
+        clearCart();
+        alert('¡Pedido realizado con éxito!');
+      } else {
+        throw new Error('Error en la respuesta del servidor');
+      }
     } catch (error) {
       console.error('Error al agregar una orden: ', error);
       alert('Se ha producido un error al procesar el pedido. Por favor, inténtelo de nuevo.');

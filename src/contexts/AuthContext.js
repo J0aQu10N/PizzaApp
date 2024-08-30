@@ -1,8 +1,6 @@
-/*
 import React, { createContext, useState, useEffect } from 'react';
-import { auth, db } from '../firebase/config';
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import axios from 'axios';
+import { API_URL } from '../config';
 
 export const AuthContext = createContext();
 
@@ -12,81 +10,59 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        // Verificar si el usuario es admin
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          setIsAdmin(userSnap.data().isAdmin || false);
-        } else {
-          setIsAdmin(false);
-        }
-      } else {
-        setIsAdmin(false);
-      }
+    const token = localStorage.getItem('token');
+    if (token) {
+      verifyToken(token);
+    } else {
       setLoading(false);
-    });
-    return () => unsubscribe();
+    }
   }, []);
 
-  const login = (email, password) => signInWithEmailAndPassword(auth, email, password);
-  const register = (email, password) => createUserWithEmailAndPassword(auth, email, password);
-  const logout = () => signOut(auth);
-
-  return (
-    <AuthContext.Provider value={{ user, isAdmin, loading, login, register, logout }}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => React.useContext(AuthContext); */
-
-import React, { createContext, useState, useEffect } from 'react';
-import { auth, db } from '../firebase/config';
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-
-export const AuthContext = createContext();
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          setIsAdmin(userSnap.data().isAdmin || false);
-        } else {
-          setIsAdmin(false);
-        }
-      } else {
-        setIsAdmin(false);
-      }
+  const verifyToken = async (token) => {
+    try {
+      const response = await axios.get(`${API_URL}/verify-token`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(response.data.user);
+      setIsAdmin(response.data.isAdmin);
+    } catch (error) {
+      console.error('Token verification error:', error);
+      localStorage.removeItem('token');
+    } finally {
       setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+    }
+  };
 
-  const login = (email, password) => signInWithEmailAndPassword(auth, email, password);
-  
-  const register = async (email, password) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, 'users', userCredential.user.uid), {
-      email: email,
-      isAdmin: false
-    });
-    return userCredential;
+  const login = async (email, password) => {
+    try {
+      const response = await axios.post(`${API_URL}/login`, { email, password });
+      localStorage.setItem('token', response.data.token);
+      setUser({ id: response.data.id, email });
+      setIsAdmin(response.data.isAdmin);
+    } catch (error) {
+      console.error('Login error:', error.response?.data || error.message);
+      throw error;
+    }
   };
   
-  const logout = () => signOut(auth);
+  const register = async (email, password) => {
+    try {
+      const response = await axios.post(`${API_URL}/register`, { email, password });
+      localStorage.setItem('token', response.data.token);
+      setUser({ id: response.data.id, email });
+      setIsAdmin(response.data.isAdmin);
+      return response.data;
+    } catch (error) {
+      console.error('Registration error:', error.response?.data || error.message);
+      throw error;
+    }
+  };
+  
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    setIsAdmin(false);
+  };
 
   return (
     <AuthContext.Provider value={{ user, isAdmin, loading, login, register, logout }}>

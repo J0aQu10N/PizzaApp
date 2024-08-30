@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link, Route, Routes } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, Route, Routes, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import DashboardProducts from './DashboardProducts';
 import DashboardUsers from './DashboardUsers';
@@ -8,9 +8,18 @@ import '../Dashboard.css';
 
 function Dashboard() {
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log("Dashboard montado. isAdmin:", isAdmin);
+    if (!isAdmin) {
+      console.log("El usuario no es admin, redirigiendo...");
+      navigate('/');
+    }
+  }, [isAdmin, navigate]);
 
   if (!isAdmin) {
-    return <div>No tienes permiso para acceder a esta página.</div>;
+    return <div>No tienes permiso para acceder a esta página. Redirigiendo...</div>;
   }
 
   return (
@@ -28,7 +37,6 @@ function Dashboard() {
           <Route path="products" element={<DashboardProducts />} />
           <Route path="users" element={<DashboardUsers />} />
           <Route path="carts" element={<DashboardCarts />} />
-          
         </Routes>
       </div>
     </div>

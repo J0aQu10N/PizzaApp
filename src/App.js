@@ -17,6 +17,7 @@ import DashboardProducts from './pages/DashboardProducts';
 import DashboardUsers from './pages/DashboardUsers';
 import DashboardCarts from './pages/DashboardCarts';
 
+
 const AdminRoute = ({ children }) => {
   const { user, isAdmin, loading } = useAuth();
   if (loading) {

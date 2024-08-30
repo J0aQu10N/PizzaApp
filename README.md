@@ -14,6 +14,15 @@ Consignas:
         4. Conectar el backend con el front y servir los datos de la api en el front
         5. Agregar seguridad en rutas que lo necesitan (ej: al dashboard solo puede ingresar el admin)
 
+Para iniciar el servidor:
+			node server.js
+
+Para iniciar la pagina web: 
+		    npm start
+
 Para probar las funciones de administrador el usuario es:
-    Email: admin@gmail.com
-    Contraseña: 123456
+Email:
+admin@gmail.com
+
+Contraseña:
+123456

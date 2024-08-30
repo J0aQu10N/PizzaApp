@@ -1,61 +1,74 @@
-import React, { createContext, useState, useEffect } from 'react';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import { API_URL } from '../config';
 import { useAuth } from './AuthContext';
 
 export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState({ items: [], total: 0 });
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      const fetchCart = async () => {
-        const cartDoc = await getDoc(doc(db, 'carts', user.uid));
-        if (cartDoc.exists()) {
-          setCart(cartDoc.data().items);
-        }
-      };
-      fetchCart();
+  const getAuthHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem('token')}`
+  });
+
+  const fetchCart = useCallback(async () => {
+    if (!user) {
+      setCart({ items: [], total: 0 });
+      return;
+    }
+    try {
+      const response = await axios.get(`${API_URL}/cart`, {
+        headers: getAuthHeaders()
+      });
+      setCart(response.data);
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      setCart({ items: [], total: 0 });
     }
   }, [user]);
 
-  const addToCart = (product, quantity) => {
-    setCart(prevCart => {
-      const updatedCart = [...prevCart];
-      const existingItem = updatedCart.find(item => item.id === product.id);
-      if (existingItem) {
-        existingItem.quantity += quantity;
-      } else {
-        updatedCart.push({ ...product, quantity });
-      }
-      if (user) {
-        setDoc(doc(db, 'carts', user.uid), { items: updatedCart });
-      }
-      return updatedCart;
-    });
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  const addToCart = async (product, quantity) => {
+    try {
+      const response = await axios.post(`${API_URL}/cart`, { product, quantity }, {
+        headers: getAuthHeaders()
+      });
+      setCart(response.data);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
   };
 
-  const removeFromCart = (productId) => {
-    setCart(prevCart => {
-      const updatedCart = prevCart.filter(item => item.id !== productId);
-      if (user) {
-        setDoc(doc(db, 'carts', user.uid), { items: updatedCart });
-      }
-      return updatedCart;
-    });
+  const removeFromCart = async (productId) => {
+    try {
+      const response = await axios.delete(`${API_URL}/cart/${productId}`, {
+        headers: getAuthHeaders()
+      });
+      setCart(response.data);
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      throw error;
+    }
   };
 
-  const clearCart = () => {
-    setCart([]);
-    if (user) {
-      setDoc(doc(db, 'carts', user.uid), { items: [] });
+  const clearCart = async () => {
+    try {
+      await axios.delete(`${API_URL}/cart`, {
+        headers: getAuthHeaders()
+      });
+      setCart({ items: [], total: 0 });
+    } catch (error) {
+      console.error('Error clearing cart:', error);
     }
   };
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, fetchCart }}>
       {children}
     </CartContext.Provider>
   );
